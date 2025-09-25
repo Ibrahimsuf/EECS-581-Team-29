@@ -75,6 +75,9 @@ def game_payload(game_id):
         "mines": g["mines"],
         "remaining_mines": remaining,
         "board": public_view(g),                     # 2D array of ".", "F", " ", "1".."8", "B" (B only when game over)
+        # Turn-based add
+        "ai_enabled": g.get("ai_enabled", False),
+        "turn": g.get("turn", "human"),         
     }
 
 # ---- Routes ----
@@ -107,6 +110,9 @@ def create_game():
         "mines_placed": False,       # will place after first reveal
         "status": "Playing",
         "safe_neighbors": safe_neighbors,
+        # Turn-based val
+        "ai_enabled": True,          #AI mode on default
+        "turn": "human",           # human starts
     }
     return corsify(jsonify({"game_id": gid, "status": "Playing"})), 201
    
@@ -139,6 +145,10 @@ def reveal(gid):
     if g["status"] != "Playing":
         return corsify(jsonify(game_payload(gid)))
 
+    # human's turn if AI mode is enabled for debug
+    if g.get("ai_enabled", False) and g.get("turn", "human") != "human":
+        return corsify(jsonify({"error": "not human's turn", "turn": g.get("turn")})), 409
+
     data = request.get_json(silent=True) or {}
     try:
         r = int(data["row"])
@@ -159,6 +169,9 @@ def reveal(gid):
         g["status"] = "Victory"
         
 
+    if g["status"] == "Playing" and g.get("ai_enabled", False):
+        g["turn"] = "ai"
+
     return corsify(jsonify(game_payload(gid)))
 
 @app.route("/games/<gid>/flag", methods=["POST", "OPTIONS"])
@@ -171,6 +184,10 @@ def flag(gid):
         return corsify(jsonify({"error": "game not found"})), 404
     if g["status"] != "Playing":
         return corsify(jsonify(game_payload(gid)))
+
+    # human's turn if AI mode is enabled
+    if g.get("ai_enabled", False) and g.get("turn", "human") != "human":
+        return corsify(jsonify({"error": "not human's turn", "turn": g.get("turn")})), 409
 
     data = request.get_json(silent=True) or {}
     try:
@@ -185,6 +202,29 @@ def flag(gid):
     if not ok:
         return corsify(jsonify({"error": "cannot flag/unflag a revealed cell"})), 400
     
+    return corsify(jsonify(game_payload(gid)))
+# For testing
+@app.route("/games/<gid>/aiEnd", methods=["POST", "OPTIONS"])
+def aiEnd(gid):
+    if request.method == "OPTIONS":
+        return corsify(make_response("", 204))
+
+    g = GAMES.get(gid)
+    if not g:
+        return corsify(jsonify({"error": "game not found"})), 404
+
+    if not g.get("ai_enabled", False):
+        return corsify(jsonify({"error": "ai not enabled"})), 400
+
+    if g["status"] != "Playing":
+        return corsify(jsonify(game_payload(gid)))
+
+    # Only allow finishing when it's AI's turn
+    if g.get("turn", "human") != "ai":
+        return corsify(jsonify({"error": "not ai's turn", "turn": g.get("turn")})), 409
+
+    # AI ended its move; hand back to human
+    g["turn"] = "human"
     return corsify(jsonify(game_payload(gid)))
 
 

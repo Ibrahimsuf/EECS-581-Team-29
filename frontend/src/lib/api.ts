@@ -10,6 +10,9 @@ export type GameState = {
   mines: number;
   remaining_mines: number;
   board: BoardCell[][];
+  //turn-based
+  ai_enabled?: boolean;
+  turn?: "human" | "ai";
 };
 
 export async function createGame(mines = 15, safeNeighbors = true) {
@@ -45,5 +48,14 @@ export async function flag(gameId: string, row: number, col: number, ai_mode: st
     body: JSON.stringify({ row, col, ai_mode }),
   });
   if (!res.ok) throw new Error(`Flag failed: ${res.status}`);
+  return (await res.json()) as GameState;
+}
+//Helpers ending AI turn
+export async function aiEnd(gameId: string) {
+  const res = await fetch(`${API_BASE}/games/${gameId}/aiEnd`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`AI end failed: ${res.status}`);
   return (await res.json()) as GameState;
 }
