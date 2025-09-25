@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createGame, getState, reveal, flag, GameState, BoardCell } from "@/lib/api";
+import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 
 type Props = {
   defaultMines?: number;   // 10..20
@@ -37,6 +37,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
 
   const onReveal = async (r: number, c: number) => {
     if (!gameId || !state || state.status !== "Playing") return;
+    if ((state.turn ?? "human") === "ai") return; // disable human during AI turn
     try {
       setLoading(true);
       const s = await reveal(gameId, r, c);
@@ -67,7 +68,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     return cell;                       // "F", "1".."8", "B"
   };
 
-  const handleCellMouseDown = (e: React.MouseEvent, r: number, c: number) => {
+  const handleCellMouseDown = (e: React.MouseEvent<HTMLButtonElement>, r: number, c: number) => {
     // Left click: reveal, Right click: flag
     if (e.button === 2) {
       e.preventDefault();
@@ -147,7 +148,10 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       >
         {state ? (
           <div
-            className="grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300"
+            className={
+              "grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300 " +
+              ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70 pointer-events-none" : "")
+            }
             style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
           >
             {state.board.map((row, r) =>
@@ -156,7 +160,6 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                 const isFlag = cell === "F";
                 const isBomb = cell === "B";
                 const content = renderCell(cell);
-
                 const contentStr = String(content);
                 const isNumber = /^[1-8]$/.test(contentStr);
 
@@ -177,8 +180,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                     key={`${r}-${c}`}
                     type="button"
                     className={cls}
-                    onMouseDown={(e) => handleCellMouseDown(e, r, c)}
-                    onKeyDown={(e) => {
+                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => handleCellMouseDown(e, r, c)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => {
                       if (e.key === "Enter" || e.key === " ") onReveal(r, c);
                       if (e.key.toLowerCase() === "f") onFlag(r, c);
                     }}
@@ -195,6 +198,29 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
           <div className="text-sm text-gray-500">Loading…</div>
         )}
       </div>
+
+      {state?.turn === "ai" && state?.status === "Playing" && (
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <span>Bot turn</span>
+          <button
+            onClick={async () => {
+              if (!gameId) return;
+              try {
+                setLoading(true);
+                const s = await aiEnd(gameId);
+                setState(s);
+              } catch (e: any) {
+                setErrorMsg(e.message ?? "AI end failed");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+          >
+            Debug: End Bot turn
+          </button>
+        </div>
+      )}
     </div>
   );
 }
