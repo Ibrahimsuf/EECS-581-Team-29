@@ -15,11 +15,11 @@ export type GameState = {
   turn?: "human" | "ai";
 };
 
-export async function createGame(mines = 15, safeNeighbors = true) {
+export async function createGame(mines = 15, safeNeighbors = true, ai_enabled: boolean, ai_mode: string) {
   const res = await fetch(`${API_BASE}/games`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mines, safe_neighbors: safeNeighbors }),
+    body: JSON.stringify({ mines, safe_neighbors: safeNeighbors, ai_enabled, ai_mode}),
   });
   if (!res.ok) throw new Error(`Create game failed: ${res.status}`);
   return (await res.json()) as { game_id: string; status: GameState["status"] };
@@ -28,24 +28,26 @@ export async function createGame(mines = 15, safeNeighbors = true) {
 export async function getState(gameId: string) {
   const res = await fetch(`${API_BASE}/games/${gameId}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Get state failed: ${res.status}`);
-  return (await res.json()) as GameState;
+  var res_json = await res.json()
+  console.log("Res json = ", res_json)
+  return (res_json) as GameState;
 }
 
-export async function reveal(gameId: string, row: number, col: number) {
+export async function reveal(gameId: string, row: number, col: number,  ai_mode: string) {
   const res = await fetch(`${API_BASE}/games/${gameId}/reveal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ row, col }),
+    body: JSON.stringify({ row, col, ai_mode }),
   });
   if (!res.ok) throw new Error(`Reveal failed: ${res.status}`);
   return (await res.json()) as GameState;
 }
 
-export async function flag(gameId: string, row: number, col: number) {
+export async function flag(gameId: string, row: number, col: number, ai_mode: string) {
   const res = await fetch(`${API_BASE}/games/${gameId}/flag`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ row, col }),
+    body: JSON.stringify({ row, col, ai_mode }),
   });
   if (!res.ok) throw new Error(`Flag failed: ${res.status}`);
   return (await res.json()) as GameState;
