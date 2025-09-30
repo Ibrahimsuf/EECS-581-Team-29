@@ -38,6 +38,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // run any time a cell is revealed
   const onReveal = async (r: number, c: number) => {
     if (!gameId || !state || state.status !== "Playing") return;
     // Only block reveals during AI turn
@@ -47,7 +48,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       const s = await reveal(gameId, r, c);
       setState(s);
 
-      if (s.status === "Game Over: Loss") {
+      // reminder to use the API's version here where "Game Lost" is the actual loss value
+      if (s.status === "Game Lost") {
         soundManager.play("explosion");
       } else if (s.status === "Victory") {
         soundManager.play("victory");
@@ -59,13 +61,13 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     }
   };
 
-
   const onFlag = async (r: number, c: number) => {
     if (!gameId || !state || state.status !== "Playing") return;
     try {
       setLoading(true);
       const s = await flag(gameId, r, c);
       setState(s);
+      // proper flag placed --> play sound
       soundManager.play("flag");
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");

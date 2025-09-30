@@ -1,22 +1,39 @@
-// frontend/src/SoundManager.js
+// frontend/src/soundManager.ts
 class SoundManager {
-  sounds: any;
-  constructor() {
+  // store sounds as HTML Audio
+  private sounds: Record<string, HTMLAudioElement> = {};
+  private initialized = false;
+
+  // initialize sound files
+  private initSounds() {
+    // ensure this is run inside the browser
+    if (this.initialized || typeof window === 'undefined') return;
+
     this.sounds = {
-      explosion: new Audio("/sounds/explosion.mp3"),    //initializing the sounds with names
+      explosion: new Audio("/sounds/explosion.mp3"),
       flag: new Audio("/sounds/flag.mp3"),
       gameStart: new Audio("/sounds/game_start.mp3"),
       victory: new Audio("/sounds/victory.mp3"),
     };
+
+    this.initialized = true;
   }
 
-  play(name: keyof typeof this.sounds) {
+  // play given sound
+  play(name: string) {
+    // ensure sounds are initialized
+    this.initSounds();
+
+    // if the sound exists, play it
     if (this.sounds[name]) {
       this.sounds[name].currentTime = 0; // restart if already playing
-      this.sounds[name].play();
+      this.sounds[name].play().catch(error => {
+        console.warn('Failed to play sound:', error);
+      });
     }
   }
 }
 
+// export for use in tsx components
 const soundManager = new SoundManager();
 export default soundManager;
