@@ -74,9 +74,10 @@ def game_payload(game_id):
         "height": g["height"],
         "mines": g["mines"],
         "remaining_mines": remaining,
-        "board": public_view(g),                     # 2D array of ".", "F", " ", "1".."8", "B" (B only when game over)
+        "board": public_view(g),  
+        "ai_mode": g["ai_mode"],                 # 2D array of ".", "F", " ", "1".."8", "B" (B only when game over)
         # Turn-based add
-        "ai_enabled": g.get("ai_enabled", False),
+        "ai_enabled": g["ai_enabled"],
         "turn": g.get("turn", "human"),         
     }
 
@@ -91,10 +92,9 @@ def create_game():
     width  = int(data.get("width",  DEFAULT_WIDTH))
     height = int(data.get("height", DEFAULT_HEIGHT))
     mines  = int(data.get("mines", 10))            # must be 10..20 per your rules
-    ai_mode = data.get("ai_mode", "No AI")
     ai_enabled = data.get("ai_enabled")
     safe_neighbors = bool(data.get("safe_neighbors", True))  # first click safe zone includes neighbors
-
+    ai_mode = data.get("ai_mode", "NO AI")
     # Enforce your rules
     if width != 10 or height != 10:
         return corsify(jsonify({"error": "Board must be 10x10"})), 400
@@ -111,8 +111,9 @@ def create_game():
         "mines_placed": False,       # will place after first reveal
         "status": "Playing",
         "safe_neighbors": safe_neighbors,
+        "ai_mode": ai_mode,
         # Turn-based val
-        "ai_mode": ai_enabled,          #AI mode on default
+        "ai_enabled": ai_enabled,          #AI mode on default
         "turn": "human",           # human starts
     }
     return corsify(jsonify({"game_id": gid, "status": "Playing"})), 201
@@ -167,8 +168,9 @@ def reveal(gid):
         
     elif is_win(g["board"]):
         g["status"] = "Victory"
-        
-
+    print()
+    if g["ai_enabled"]:
+        g["turn"] = "ai"
     return corsify(jsonify(game_payload(gid)))
 
 @app.route("/games/<gid>/flag", methods=["POST", "OPTIONS"])
@@ -198,16 +200,13 @@ def flag(gid):
     ok = toggle_flag(g["board"], r, c, g["width"], g["height"])
     if not ok:
         return corsify(jsonify({"error": "cannot flag/unflag a revealed cell"})), 400
-    
+    if g["ai_enabled"]:
+        g["turn"] = "ai"
     return corsify(jsonify(game_payload(gid)))
 # For testing
 @app.route("/games/<gid>/aiEnd", methods=["POST", "OPTIONS"])
 def aiEnd(gid):
     data = request.get_json(silent=True) or {}
-    try:
-        ai_mode = data["ai_mode"]
-    except:
-        ai_mode = "NO AI"
     if request.method == "OPTIONS":
         return corsify(make_response("", 204))
 
@@ -215,6 +214,7 @@ def aiEnd(gid):
     if not g:
         return corsify(jsonify({"error": "game not found"})), 404
 
+    ai_mode = g.get("ai_mode", "No AI")
     # make ai move
     if ai_mode == "No AI":
         return corsify(jsonify(game_payload(gid)))
@@ -226,6 +226,7 @@ def aiEnd(gid):
             g["status"] = "Game Lost"   
         elif is_win(g["board"]):
             g["status"] = "Victory"
+    g["turn"] = "human"
     return corsify(jsonify(game_payload(gid)))
 
 

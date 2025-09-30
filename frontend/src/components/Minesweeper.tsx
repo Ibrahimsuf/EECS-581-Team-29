@@ -32,12 +32,11 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     try {
       setLoading(true);
       setErrorMsg(null);
-      const g = await createGame(mines, safeNeighbors, false);
-      console.log(g)
+      const g = await createGame(mines, safeNeighbors, selectedDifficulty != "No AI", selectedDifficulty);
       setGameId(g.game_id);
+      console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
-      console.log(state)
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -51,6 +50,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
   }, []);
 
   const onReveal = async (r: number, c: number) => {
+    console.log(state)
     if (!gameId || !state || state.status !== "Playing") return;
     if ((state.turn ?? "human") === "ai") return; // disable human during AI turn
     try {

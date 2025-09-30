@@ -15,11 +15,11 @@ export type GameState = {
   turn?: "human" | "ai";
 };
 
-export async function createGame(mines = 15, safeNeighbors = true, ai_enabled: boolean) {
+export async function createGame(mines = 15, safeNeighbors = true, ai_enabled: boolean, ai_mode: string) {
   const res = await fetch(`${API_BASE}/games`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mines, safe_neighbors: safeNeighbors, ai_enabled}),
+    body: JSON.stringify({ mines, safe_neighbors: safeNeighbors, ai_enabled, ai_mode}),
   });
   if (!res.ok) throw new Error(`Create game failed: ${res.status}`);
   return (await res.json()) as { game_id: string; status: GameState["status"] };
