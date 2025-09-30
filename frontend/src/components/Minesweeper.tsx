@@ -1,41 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd, aiEnd } from "@/lib/api";
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';import BotAvatar from "./BotAvatar";
+import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 import BotAvatar from "./BotAvatar";
 
 type Props = {
   defaultMines?: number;   // 10..20
   safeNeighbors?: boolean; // true = first click protects neighbors too
 };
-interface Difficulty {
-  name: string
-  selected: boolean
-}
-
-let Difficulties: Difficulty[] = [
-  {name: "No AI", selected: true},
-  {name: "Easy AI", selected: false},
-  {name: "Medium AI", selected: false},
-  {name: "Hard AI", selected: false}
-]
 
 export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }: Props) {
   const [gameId, setGameId] = useState<string | null>(null);
   const [state, setState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] = useState("No AI")
+
   // Start new game
   const newGame = async (mines = defaultMines) => {
     try {
       setLoading(true);
       setErrorMsg(null);
-      const g = await createGame(mines, safeNeighbors, selectedDifficulty != "No AI", selectedDifficulty);
+      const g = await createGame(mines, safeNeighbors);
       setGameId(g.game_id);
-      console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
     } catch (e: any) {
@@ -51,13 +37,11 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
   }, []);
 
   const onReveal = async (r: number, c: number) => {
-    console.log(state)
     if (!gameId || !state || state.status !== "Playing") return;
-    if ((state.turn ?? "human") === "ai") return; // disable human during AI turn
     if ((state.turn ?? "human") === "ai") return; // disable human during AI turn
     try {
       setLoading(true);
-      const s = await reveal(gameId, r, c, selectedDifficulty);
+      const s = await reveal(gameId, r, c);
       setState(s);
     } catch (e: any) {
       setErrorMsg(e.message ?? "Reveal failed");
@@ -70,7 +54,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     if (!gameId || !state || state.status !== "Playing") return;
     try {
       setLoading(true);
-      const s = await flag(gameId, r, c, selectedDifficulty);
+      const s = await flag(gameId, r, c);
       setState(s);
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");
@@ -85,7 +69,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     return cell;                       // "F", "1".."8", "B"
   };
 
-  const handleCellMouseDown = (e: React.MouseEvent<HTMLButtonElement><HTMLButtonElement>, r: number, c: number) => {
+  const handleCellMouseDown = (e: React.MouseEvent<HTMLButtonElement>, r: number, c: number) => {
     // Left click: reveal, Right click: flag
     if (e.button === 2) {
       e.preventDefault();
@@ -120,19 +104,6 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-start gap-2">
-        <div className="flex items-center gap-3">
-          <Stack spacing={2} direction="row">
-            {
-              Difficulties.map((difficulty) => 
-              <Button 
-              variant={(difficulty.name == selectedDifficulty) ? "contained" : "outlined"}
-              onClick={(event) => setSelectedDifficulty(difficulty.name)}
-              >{difficulty.name}
-              </Button>
-            )
-            }
-          </Stack>
-        </div>
         <div className="flex items-center gap-3">
           <label className="text-sm">Mines:</label>
             <div className="flex gap-2">
@@ -224,45 +195,11 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                 );
               })
             )}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500">Loading…</div>
-            )}
-          </div>
-        
-        {/* Bot Avatar pos*/}
-        {state && (
-          <div className="mb-2">
-            <BotAvatar 
-              isAiTurn={(state.turn ?? "human") === "ai"} 
-              gameStatus={state.status}
-            />
-          </div>
-        )}
-      </div>
-
-      {state?.ai_enabled && state?.turn === "ai" && state?.status === "Playing" && (
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <span>Bot turn</span>
-          <button
-            onClick={async () => {
-              if (!gameId) return;
-              try {
-                setLoading(true);
-                const s = await aiEnd(gameId);
-                setState(s);
-              } catch (e: any) {
-                setErrorMsg(e.message ?? "AI end failed");
-              } finally {
-                setLoading(false);
-              }
-            }}
-            className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
-          >
-            Debug: End Bot turn
-          </button>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Loading…</div>
+          )}
         </div>
-      )}
         
         {/* Bot Avatar pos*/}
         {state && (
