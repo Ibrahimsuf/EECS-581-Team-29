@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import React from "react";
-import soundManager from "../lib/SoundManager";
+import soundManager from "@/lib/soundManager";
 
 export interface CellProps {
   value: string;
