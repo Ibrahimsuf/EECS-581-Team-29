@@ -1,7 +1,7 @@
 # api.py
 import uuid
 from flask import Flask, request, jsonify, make_response
-
+from ai import ai_move
 from board import (
     create_board, reveal_cell, toggle_flag, is_win, placed_flag_count, neighbors
 )
@@ -167,12 +167,21 @@ def reveal(gid):
         
     elif is_win(g["board"]):
         g["status"] = "Victory"
-        
-
+    # make ai move
+    if ai_mode == "No AI":
+        return corsify(jsonify(game_payload(gid)))
+    else:
+        ai_move_squares =  ai_move(g["board"],  g["width"], g["height"], ai_mode)
+        r_ai, c_ai, _ = ai_move_squares
+        res = reveal_cell(g["board"], r_ai, c_ai, g["width"], g["height"])
+        if res == "boom":
+            g["status"] = "Game Lost"   
+        elif is_win(g["board"]):
+            g["status"] = "Victory"
     if g["status"] == "Playing" and g.get("ai_enabled", False):
         g["turn"] = "ai"
 
-    return corsify(jsonify(game_payload(gid)))
+        return corsify(jsonify(game_payload(gid)))
 
 @app.route("/games/<gid>/flag", methods=["POST", "OPTIONS"])
 def flag(gid):
