@@ -206,6 +206,11 @@ def flag(gid):
 # For testing
 @app.route("/games/<gid>/aiEnd", methods=["POST", "OPTIONS"])
 def aiEnd(gid):
+    data = request.get_json(silent=True) or {}
+    try:
+        ai_mode = data["ai_mode"]
+    except:
+        ai_mode = "NO AI"
     if request.method == "OPTIONS":
         return corsify(make_response("", 204))
 
