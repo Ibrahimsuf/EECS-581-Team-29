@@ -1,7 +1,6 @@
 "use client";
 
-import soundManager from "../lib/SoundManager";
-import { useEffect, useState } from "react";
+import soundManager from "@/lib/soundManager";
 import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 import BotAvatar from "./BotAvatar";
 
