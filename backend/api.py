@@ -149,7 +149,7 @@ def reveal(gid):
 
     # human's turn if AI mode is enabled for debug
     if g.get("ai_enabled", False) and g.get("turn", "human") != "human":
-        return corsify(jsonify({"error": "not human's turn", "turn": g.get("turn")})), 409
+        return corsify(jsonify(game_payload(gid)))
 
     data = request.get_json(silent=True) or {}
     try:
@@ -184,9 +184,8 @@ def flag(gid):
     if g["status"] != "Playing":
         return corsify(jsonify(game_payload(gid)))
 
-    # human's turn if AI mode is enabled
-    if g.get("ai_enabled", False) and g.get("turn", "human") != "human":
-        return corsify(jsonify({"error": "not human's turn", "turn": g.get("turn")})), 409
+    
+    #  NOT enforcing turn == human here.
 
     data = request.get_json(silent=True) or {}
     try:

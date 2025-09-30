@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import soundManager from "@/lib/soundManager";
 import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';import BotAvatar from "./BotAvatar";
+import { useState, useEffect } from "react";
 
 type Props = {
   defaultMines?: number;   // 10..20
@@ -37,6 +38,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
+      soundManager.play("gameStart");
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -49,14 +51,23 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // run any time a cell is revealed
   const onReveal = async (r: number, c: number) => {
     console.log(state)
     if (!gameId || !state || state.status !== "Playing") return;
-    if ((state.turn ?? "human") === "ai") return; // disable human during AI turn
+    // Only block reveals during AI turn
+    if ((state.turn ?? "human") === "ai") return;
     try {
       setLoading(true);
       const s = await reveal(gameId, r, c, selectedDifficulty);
       setState(s);
+
+      // reminder to use the API's version here where "Game Lost" is the actual loss value
+      if (s.status === "Game Lost") {
+        soundManager.play("explosion");
+      } else if (s.status === "Victory") {
+        soundManager.play("victory");
+      }
     } catch (e: any) {
       setErrorMsg(e.message ?? "Reveal failed");
     } finally {
@@ -70,6 +81,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       setLoading(true);
       const s = await flag(gameId, r, c, selectedDifficulty);
       setState(s);
+      // proper flag placed --> play sound
+      soundManager.play("flag");
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");
     } finally {
@@ -179,7 +192,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
             <div
               className={
                 "grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300 " +
-                ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70 pointer-events-none" : "")
+                // delete pointer events block
+                ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70" : "")
               }
               style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
             >
