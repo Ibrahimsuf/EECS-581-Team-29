@@ -32,10 +32,12 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     try {
       setLoading(true);
       setErrorMsg(null);
-      const g = await createGame(mines, safeNeighbors);
+      const g = await createGame(mines, safeNeighbors, false);
+      console.log(g)
       setGameId(g.game_id);
       const s = await getState(g.game_id);
       setState(s);
+      console.log(state)
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -237,7 +239,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
         )}
       </div>
 
-      {state?.turn === "ai" && state?.status === "Playing" && (
+      {state?.ai_enabled && state?.turn === "ai" && state?.status === "Playing" && (
         <div className="flex items-center gap-3 text-sm text-gray-600">
           <span>Bot turn</span>
           <button

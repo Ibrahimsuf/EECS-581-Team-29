@@ -92,6 +92,7 @@ def create_game():
     height = int(data.get("height", DEFAULT_HEIGHT))
     mines  = int(data.get("mines", 10))            # must be 10..20 per your rules
     ai_mode = data.get("ai_mode", "No AI")
+    ai_enabled = data.get("ai_enabled")
     safe_neighbors = bool(data.get("safe_neighbors", True))  # first click safe zone includes neighbors
 
     # Enforce your rules
@@ -111,7 +112,7 @@ def create_game():
         "status": "Playing",
         "safe_neighbors": safe_neighbors,
         # Turn-based val
-        "ai_enabled": True,          #AI mode on default
+        "ai_mode": ai_enabled,          #AI mode on default
         "turn": "human",           # human starts
     }
     return corsify(jsonify({"game_id": gid, "status": "Playing"})), 201
@@ -157,7 +158,6 @@ def reveal(gid):
         print(f"The AI Mode is {ai_mode}")
     except Exception:
         return corsify(jsonify({"error": "row and col (0-based) are required"})), 400
-
     # First click safe (and neighbors if configured)
     ensure_mines(g, r, c)
 
@@ -167,21 +167,9 @@ def reveal(gid):
         
     elif is_win(g["board"]):
         g["status"] = "Victory"
-    # make ai move
-    if ai_mode == "No AI":
-        return corsify(jsonify(game_payload(gid)))
-    else:
-        ai_move_squares =  ai_move(g["board"],  g["width"], g["height"], ai_mode)
-        r_ai, c_ai, _ = ai_move_squares
-        res = reveal_cell(g["board"], r_ai, c_ai, g["width"], g["height"])
-        if res == "boom":
-            g["status"] = "Game Lost"   
-        elif is_win(g["board"]):
-            g["status"] = "Victory"
-    if g["status"] == "Playing" and g.get("ai_enabled", False):
-        g["turn"] = "ai"
+        
 
-        return corsify(jsonify(game_payload(gid)))
+    return corsify(jsonify(game_payload(gid)))
 
 @app.route("/games/<gid>/flag", methods=["POST", "OPTIONS"])
 def flag(gid):
@@ -227,18 +215,17 @@ def aiEnd(gid):
     if not g:
         return corsify(jsonify({"error": "game not found"})), 404
 
-    if not g.get("ai_enabled", False):
-        return corsify(jsonify({"error": "ai not enabled"})), 400
-
-    if g["status"] != "Playing":
+    # make ai move
+    if ai_mode == "No AI":
         return corsify(jsonify(game_payload(gid)))
-
-    # Only allow finishing when it's AI's turn
-    if g.get("turn", "human") != "ai":
-        return corsify(jsonify({"error": "not ai's turn", "turn": g.get("turn")})), 409
-
-    # AI ended its move; hand back to human
-    g["turn"] = "human"
+    else:
+        ai_move_squares =  ai_move(g["board"],  g["width"], g["height"], ai_mode)
+        r_ai, c_ai, _ = ai_move_squares
+        res = reveal_cell(g["board"], r_ai, c_ai, g["width"], g["height"])
+        if res == "boom":
+            g["status"] = "Game Lost"   
+        elif is_win(g["board"]):
+            g["status"] = "Victory"
     return corsify(jsonify(game_payload(gid)))
 
 
