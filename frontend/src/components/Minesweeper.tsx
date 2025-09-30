@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
+import BotAvatar from "./BotAvatar";
 
 type Props = {
   defaultMines?: number;   // 10..20
@@ -140,20 +141,21 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       )}
 
       {/* Grid */}
-      <div
-        className="inline-block select-none"
-        onContextMenu={handleContextMenu}
-        role="grid"
-        aria-label="Minesweeper grid"
-      >
-        {state ? (
-          <div
-            className={
-              "grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300 " +
-              ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70 pointer-events-none" : "")
-            }
-            style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
-          >
+      <div className="flex items-end gap-4">
+        <div
+          className="inline-block select-none"
+          onContextMenu={handleContextMenu}
+          role="grid"
+          aria-label="Minesweeper grid"
+        >
+          {state ? (
+            <div
+              className={
+                "grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300 " +
+                ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70 pointer-events-none" : "")
+              }
+              style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
+            >
             {state.board.map((row, r) =>
               row.map((cell, c) => {
                 const isCovered = cell === ".";
@@ -193,9 +195,20 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                 );
               })
             )}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Loading…</div>
+          )}
+        </div>
+        
+        {/* Bot Avatar pos*/}
+        {state && (
+          <div className="mb-2">
+            <BotAvatar 
+              isAiTurn={(state.turn ?? "human") === "ai"} 
+              gameStatus={state.status}
+            />
           </div>
-        ) : (
-          <div className="text-sm text-gray-500">Loading…</div>
         )}
       </div>
 
