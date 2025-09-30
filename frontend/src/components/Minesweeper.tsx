@@ -1,5 +1,6 @@
 "use client";
 
+import soundManager from "../lib/SoundManager";
 import { useEffect, useState } from "react";
 import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 import Stack from '@mui/material/Stack';
@@ -37,6 +38,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
+      soundManager.play("gameStart");
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -57,6 +59,12 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       setLoading(true);
       const s = await reveal(gameId, r, c, selectedDifficulty);
       setState(s);
+
+      if (s.status === "Lost") {
+        soundManager.play("explosion");
+      } else if (s.status === "Won") {
+        soundManager.play("victory");
+      }
     } catch (e: any) {
       setErrorMsg(e.message ?? "Reveal failed");
     } finally {
@@ -64,12 +72,14 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     }
   };
 
+
   const onFlag = async (r: number, c: number) => {
     if (!gameId || !state || state.status !== "Playing") return;
     try {
       setLoading(true);
       const s = await flag(gameId, r, c, selectedDifficulty);
       setState(s);
+      soundManager.play("flag");
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");
     } finally {
