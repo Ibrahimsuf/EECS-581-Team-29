@@ -16,6 +16,39 @@ Last Modified: 2024-10-10
 import random
 from board import neighbors, reveal_cell
 
+
+def easy_ai_move(board, width, height):
+	"""
+	Easy AI: Uncovers cells randomly, avoiding flagged or already uncovered cells.
+	Returns (row, col, action) where action is 'reveal' or 'boom'.
+	"""
+	candidates = [(r, c) for r in range(height) for c in range(width)
+				  if not board[(r, c)]["revealed"] and not board[(r, c)]["flagged"]]
+	if not candidates:
+		return None
+	r, c = random.choice(candidates)
+	result = reveal_cell(board, r, c, width, height)
+	if result == "boom":
+		return (r, c, "boom")
+	if board[(r, c)]["revealed"]:
+		return (r, c, "reveal")
+	return None
+
+
+def hard_ai_move(board, width, height):
+	"""
+	Hard AI: Always uncovers a safe cell (non-mine), simulating perfect knowledge.
+	Returns (row, col, action) where action is 'reveal'.
+	"""
+	candidates = [(r, c) for r in range(height) for c in range(width)
+				  if not board[(r, c)]["revealed"] and not board[(r, c)]["flagged"] and board[(r, c)]["type"] != "m"]
+	if not candidates:
+		return None
+	r, c = random.choice(candidates)
+	reveal_cell(board, r, c, width, height)
+	return (r, c, "reveal")
+
+
 def medium_ai_move(board, width, height):
 	# Step 1: Find all unrevealed, unflagged cells
 	# These are the cells the AI can safely consider for random moves
