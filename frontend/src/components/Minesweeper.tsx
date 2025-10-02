@@ -166,6 +166,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
             {
               Difficulties.map((difficulty) => 
               <Button 
+              key={difficulty.name}
               variant={(difficulty.name == selectedDifficulty) ? "contained" : "outlined"}
               onClick={(event) => setSelectedDifficulty(difficulty.name)}
               >{difficulty.name}

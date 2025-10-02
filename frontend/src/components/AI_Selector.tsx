@@ -24,6 +24,7 @@ export function AI_Selector() {
       {
         Difficulties.map((difficulty) => 
         <Button 
+        key={difficulty.name}
         variant={(difficulty.name == selectedDifficulty) ? "contained" : "outlined"}
         onClick={(event) => setSelectedDifficulty(difficulty.name)}
         >{difficulty.name}
