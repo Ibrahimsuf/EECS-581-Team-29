@@ -169,7 +169,8 @@ def reveal(gid):
     elif is_win(g["board"]):
         g["status"] = "Victory"
     print()
-    if g["ai_enabled"]:
+    # Only switch to AI turn on valid revealed cells
+    if g["ai_enabled"] and res != "already":
         g["turn"] = "ai"
     return corsify(jsonify(game_payload(gid)))
 
@@ -199,8 +200,6 @@ def flag(gid):
     ok = toggle_flag(g["board"], r, c, g["width"], g["height"])
     if not ok:
         return corsify(jsonify({"error": "cannot flag/unflag a revealed cell"})), 400
-    if g["ai_enabled"]:
-        g["turn"] = "ai"
     return corsify(jsonify(game_payload(gid)))
 # For testing
 @app.route("/games/<gid>/aiEnd", methods=["POST", "OPTIONS"])
