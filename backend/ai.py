@@ -16,10 +16,14 @@ Last Modified: 2024-10-10
 import random
 from board import neighbors, reveal_cell
 
-def ai_move(board, width, heigh, mode):
+def ai_move(board, width, height, mode):
 	match mode:
 			case "Medium AI":
-					return medium_ai_move(board, width, heigh)
+					return medium_ai_move(board, width, height)
+			case "Easy AI":
+				return easy_ai_move(board, width, height)
+			case "Hard AI":
+				return hard_ai_move(board, width, height)
 			case "No AI":
 				return False
 			case _:
