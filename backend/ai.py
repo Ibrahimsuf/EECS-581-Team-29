@@ -16,7 +16,6 @@ Last Modified: 2024-10-10
 import random
 from board import neighbors, reveal_cell
 
-<<<<<<< HEAD
 def ai_move(board, width, heigh, mode):
 	match mode:
 			case "Medium AI":
@@ -25,11 +24,6 @@ def ai_move(board, width, heigh, mode):
 				return False
 			case _:
 					raise ValueError(f"No mode other than medium at the moment, {mode} is not a valid a ai mode")
-
-	
-
-||||||| parent of 565937d (Update ai.py)
-=======
 
 def easy_ai_move(board, width, height):
 	"""
@@ -63,7 +57,6 @@ def hard_ai_move(board, width, height):
 	return (r, c, "reveal")
 
 
->>>>>>> 565937d (Update ai.py)
 def medium_ai_move(board, width, height):
 	# Step 1: Find all unrevealed, unflagged cells
 	# These are the cells the AI can safely consider for random moves
