@@ -51,6 +51,36 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-trigger AI moves
+  useEffect(() => {
+    const makeAiMove = async () => {
+      if (!gameId || !state || state.status !== "Playing") return;
+      if ((state.turn ?? "human") !== "ai") return;
+      if (loading) return; // Prevent multiple concurrent AI moves
+
+      try {
+        setLoading(true);
+        // small delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const s = await aiEnd(gameId);
+        setState(s);
+        
+        // Play sounds for AI moves
+        if (s.status === "Game Lost") {
+          soundManager.play("explosion");
+        } else if (s.status === "Victory") {
+          soundManager.play("victory");
+        }
+      } catch (e: any) {
+        setErrorMsg(e.message ?? "AI move failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    makeAiMove();
+  }, [state?.turn, gameId, state?.status, loading]);
+
   // run any time a cell is revealed
   const onReveal = async (r: number, c: number) => {
     console.log(state)
