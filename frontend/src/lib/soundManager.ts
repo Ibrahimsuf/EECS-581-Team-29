@@ -8,7 +8,7 @@ class SoundManager {
   private initSounds() {
     // ensure this is run inside the browser
     if (this.initialized || typeof window === 'undefined') return;
-
+    //initializing each soundfile as a new name
     this.sounds = {
       explosion: new Audio("/sounds/explosion.mp3"),
       flag: new Audio("/sounds/flag.mp3"),
@@ -28,7 +28,7 @@ class SoundManager {
     if (this.sounds[name]) {
       this.sounds[name].currentTime = 0; // restart if already playing
       this.sounds[name].play().catch(error => {
-        console.warn('Failed to play sound:', error);
+        console.warn('Failed to play sound:', error);                    // Show error if sound cannot be tracked
       });
     }
   }
