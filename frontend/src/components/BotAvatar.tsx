@@ -1,3 +1,11 @@
+/**
+ * BotAvatar Component - Avatar to indicate AI status
+ * 
+ * Displays animated bot avatar with status during its turn
+ * Shows game state feedback
+ * EECS 581 Team 29 - Minesweepers of the Midwest
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";

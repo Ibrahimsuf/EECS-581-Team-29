@@ -1,4 +1,16 @@
-# api.py
+"""
+Flask API for Minesweeper game.
+
+Flask REST API for Minesweeper with AI opponents
+EECS 581 Team 34 - Minesweepers of the Midwest
+
+Endpoints: /games (POST), /games/{id} (GET/DELETE), /games/{id}/reveal (POST), 
+           /games/{id}/flag (POST), /games/{id}/aiEnd (POST)
+ADDED Features: Turn-based gameplay, AI difficulties (Easy/Medium/Hard), CORS enabled
+Port: 8000
+Authors: Chloe Tran, Ibrahim.
+"""
+
 import uuid
 from flask import Flask, request, jsonify, make_response
 from ai import ai_move
@@ -185,8 +197,6 @@ def flag(gid):
     if g["status"] != "Playing":
         return corsify(jsonify(game_payload(gid)))
 
-    
-    #  NOT enforcing turn == human here.
 
     data = request.get_json(silent=True) or {}
     try:

@@ -1,3 +1,12 @@
+/**
+ * Minesweeper Main Component - Core game logic with AI integration
+ *
+ * ADDED Features: Turn-based gameplay, AI opponents, sound effects, interactive UI
+ * Handles game state, user input, AI automation, and API communication
+ * 
+ * EECS 581 Team 34
+ */
+
 "use client";
 
 import soundManager from "@/lib/soundManager";
