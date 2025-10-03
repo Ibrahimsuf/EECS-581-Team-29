@@ -47,7 +47,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
-      soundManager.play("gameStart");
+      soundManager.play("gameStart");  // Play the music at game start
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -104,8 +104,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       // reminder to use the API's version here where "Game Lost" is the actual loss value
       if (s.status === "Game Lost") {
         soundManager.play("explosion");
-      } else if (s.status === "Victory") {
-        soundManager.play("victory");
+      } else if (s.status === "Victory") {    //check for victory status
+        soundManager.play("victory");      //play The victory sound 
       }
     } catch (e: any) {
       setErrorMsg(e.message ?? "Reveal failed");
@@ -121,7 +121,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       const s = await flag(gameId, r, c, selectedDifficulty);
       setState(s);
       // proper flag placed --> play sound
-      soundManager.play("flag");
+      soundManager.play("flag");  
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");
     } finally {
