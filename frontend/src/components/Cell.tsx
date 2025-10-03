@@ -19,12 +19,12 @@ export const Cell: React.FC<CellProps> = ({ value, revealed, flagged, onClick, o
         onClick();
         // If the revealed cell is a bomb
         if (value === "B") {
-          soundManager.play("explosion");
+          soundManager.play("explosion");        // play the sound 'explosion' if a bomb is pressed
         }
       }}
       onContextMenu={(e) => {
         onRightClick(e);
-        soundManager.play("flag");
+        soundManager.play("flag");            // Play the sound if a flag is marked
       }}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
