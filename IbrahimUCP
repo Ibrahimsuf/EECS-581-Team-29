@@ -1,0 +1,32 @@
+User Story:
+The user should be able to select the difficulty level of the AI.
+
+Unadjusted Actor Weight (UAW):
+Simple (adding a single button)
+UAW = 1
+
+Unadjusted Use Case Weight (UUCW):
+Simple (only one transaction)
+UUCW = 5
+
+Technical Complexity Factor (TCF):
+End-user efficiency = 2
+Ease of use = 2
+TCF = 0.6 + 0.01 * (2 * 0.5 + 2 * 1) = 0.625
+
+Environmental Factors (EF):
+Familiarity = 3
+Application experience = 3
+Stable requirements = 5
+Difficult language = 4
+EF = 1.4 - 0.03 * (3 * 1.5 + 3 * 0.5 + 5 * 2 - 4 * 1) = 1.04
+
+Use Case Points (UCP):
+UCP = (UAW + UUCW) * TCF * EF
+UCP = (1 + 5) * 0.625 * 1.04 = 3.9
+
+Effort Estimate:
+20 hours per UCP
+3.9 * 20 = 78 hours
+
+Estimated Effort: 78 hours
