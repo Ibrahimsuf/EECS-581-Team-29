@@ -8,7 +8,7 @@ Endpoints: /games (POST), /games/{id} (GET/DELETE), /games/{id}/reveal (POST),
            /games/{id}/flag (POST), /games/{id}/aiEnd (POST)
 ADDED Features: Turn-based gameplay, AI difficulties (Easy/Medium/Hard), CORS enabled
 Port: 8000
-Authors: Chloe Tran, Ibrahim.
+Authors: Chloe Tran, Ibrahim Sufi.
 """
 
 import uuid
@@ -81,7 +81,7 @@ def game_payload(game_id):
     remaining = g["mines"] - placed_flag_count(g["board"])
     return {
         "game_id": game_id,
-        "status": g["status"],                       # "Playing" | "Game Lost" | "Victory"
+        "status": g["status"],                       # "Playing" | "Game Over: Loss" | "Victory"
         "width": g["width"],
         "height": g["height"],
         "mines": g["mines"],
@@ -176,7 +176,7 @@ def reveal(gid):
 
     res = reveal_cell(g["board"], r, c, g["width"], g["height"])
     if res == "boom":
-        g["status"] = "Game Lost"
+        g["status"] = "Game Over: Loss"
         
     elif is_win(g["board"]):
         g["status"] = "Victory"
@@ -228,10 +228,10 @@ def aiEnd(gid):
         return corsify(jsonify(game_payload(gid)))
     else:
         ai_move_squares =  ai_move(g["board"],  g["width"], g["height"], ai_mode)
-        r_ai, c_ai, _ = ai_move_squares
-        res = reveal_cell(g["board"], r_ai, c_ai, g["width"], g["height"])
-        if res == "boom":
-            g["status"] = "Game Lost"   
+        r_ai, c_ai, result = ai_move_squares
+        print("The result is + ", result)
+        if result == "boom":
+            g["status"] = "Game Over: Loss"   
         elif is_win(g["board"]):
             g["status"] = "Victory"
     g["turn"] = "human"

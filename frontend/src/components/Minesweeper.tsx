@@ -75,7 +75,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
         setState(s);
         
         // Play sounds for AI moves
-        if (s.status === "Game Lost") {
+        if (s.status === "Game Over: Loss") {
           soundManager.play("explosion");
         } else if (s.status === "Victory") {
           soundManager.play("victory");
@@ -102,7 +102,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       setState(s);
 
       // reminder to use the API's version here where "Game Lost" is the actual loss value
-      if (s.status === "Game Lost") {
+      if (s.status === "Game Over: Loss") {
         soundManager.play("explosion");
       } else if (s.status === "Victory") {    //check for victory status
         soundManager.play("victory");      //play The victory sound 
@@ -303,6 +303,13 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                 setLoading(true);
                 const s = await aiEnd(gameId);
                 setState(s);
+                console.log(s)
+                // Play sounds for AI moves
+                if (s.status === "Game Over: Loss") {
+                  soundManager.play("explosion");
+                } else if (s.status === "Victory") {
+                  soundManager.play("victory");
+                }
               } catch (e: any) {
                 setErrorMsg(e.message ?? "AI end failed");
               } finally {
