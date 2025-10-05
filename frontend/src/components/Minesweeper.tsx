@@ -1,9 +1,20 @@
+/**
+ * Minesweeper Main Component - Core game logic with AI integration
+ *
+ * ADDED Features: Turn-based gameplay, AI opponents, sound effects, interactive UI
+ * Handles game state, user input, AI automation, and API communication
+ * 
+ * EECS 581 Team 34
+ */
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { createGame, getState, reveal, flag, GameState, BoardCell } from "@/lib/api";
+import soundManager from "@/lib/soundManager";
+import { createGame, getState, reveal, flag, GameState, BoardCell, aiEnd } from "@/lib/api";
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
+import Button from '@mui/material/Button';import BotAvatar from "./BotAvatar";
+import { useState, useEffect } from "react";
+
 type Props = {
   defaultMines?: number;   // 10..20
   safeNeighbors?: boolean; // true = first click protects neighbors too
@@ -31,10 +42,12 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     try {
       setLoading(true);
       setErrorMsg(null);
-      const g = await createGame(mines, safeNeighbors);
+      const g = await createGame(mines, safeNeighbors, selectedDifficulty != "No AI", selectedDifficulty);
       setGameId(g.game_id);
+      console.log(g.game_id)
       const s = await getState(g.game_id);
       setState(s);
+      soundManager.play("gameStart");  // Play the music at game start
     } catch (e: any) {
       setErrorMsg(e.message ?? "Failed to create game");
     } finally {
@@ -47,12 +60,53 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-trigger AI moves
+  useEffect(() => {
+    const makeAiMove = async () => {
+      if (!gameId || !state || state.status !== "Playing") return;
+      if ((state.turn ?? "human") !== "ai") return;
+      if (loading) return; // Prevent multiple concurrent AI moves
+
+      try {
+        setLoading(true);
+        // small delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const s = await aiEnd(gameId);
+        setState(s);
+        
+        // Play sounds for AI moves
+        if (s.status === "Game Over: Loss") {
+          soundManager.play("explosion");
+        } else if (s.status === "Victory") {
+          soundManager.play("victory");
+        }
+      } catch (e: any) {
+        setErrorMsg(e.message ?? "AI move failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    makeAiMove();
+  }, [state?.turn, gameId, state?.status, loading]);
+
+  // run any time a cell is revealed
   const onReveal = async (r: number, c: number) => {
+    console.log(state)
     if (!gameId || !state || state.status !== "Playing") return;
+    // Only block reveals during AI turn
+    if ((state.turn ?? "human") === "ai") return;
     try {
       setLoading(true);
       const s = await reveal(gameId, r, c, selectedDifficulty);
       setState(s);
+
+      // reminder to use the API's version here where "Game Lost" is the actual loss value
+      if (s.status === "Game Over: Loss") {
+        soundManager.play("explosion");
+      } else if (s.status === "Victory") {    //check for victory status
+        soundManager.play("victory");      //play The victory sound 
+      }
     } catch (e: any) {
       setErrorMsg(e.message ?? "Reveal failed");
     } finally {
@@ -66,6 +120,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       setLoading(true);
       const s = await flag(gameId, r, c, selectedDifficulty);
       setState(s);
+      // proper flag placed --> play sound
+      soundManager.play("flag");  
     } catch (e: any) {
       setErrorMsg(e.message ?? "Flag failed");
     } finally {
@@ -79,7 +135,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
     return cell;                       // "F", "1".."8", "B"
   };
 
-  const handleCellMouseDown = (e: React.MouseEvent, r: number, c: number) => {
+  const handleCellMouseDown = (e: React.MouseEvent<HTMLButtonElement>, r: number, c: number) => {
     // Left click: reveal, Right click: flag
     if (e.button === 2) {
       e.preventDefault();
@@ -119,6 +175,7 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
             {
               Difficulties.map((difficulty) => 
               <Button 
+              key={difficulty.name}
               variant={(difficulty.name == selectedDifficulty) ? "contained" : "outlined"}
               onClick={(event) => setSelectedDifficulty(difficulty.name)}
               >{difficulty.name}
@@ -164,24 +221,28 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
       )}
 
       {/* Grid */}
-      <div
-        className="inline-block select-none"
-        onContextMenu={handleContextMenu}
-        role="grid"
-        aria-label="Minesweeper grid"
-      >
-        {state ? (
-          <div
-            className="grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300"
-            style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
-          >
+      <div className="flex items-end gap-4">
+        <div
+          className="inline-block select-none"
+          onContextMenu={handleContextMenu}
+          role="grid"
+          aria-label="Minesweeper grid"
+        >
+          {state ? (
+            <div
+              className={
+                "grid bg-gray-100 rounded-xl shadow-lg p-2 border border-gray-300 " +
+                // delete pointer events block
+                ((state.turn ?? "human") === "ai" && state.status === "Playing" ? "opacity-70" : "")
+              }
+              style={{ gridTemplateColumns: `repeat(${state.width}, 2.5rem)` }}
+            >
             {state.board.map((row, r) =>
               row.map((cell, c) => {
                 const isCovered = cell === ".";
                 const isFlag = cell === "F";
                 const isBomb = cell === "B";
                 const content = renderCell(cell);
-
                 const contentStr = String(content);
                 const isNumber = /^[1-8]$/.test(contentStr);
 
@@ -202,8 +263,8 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                     key={`${r}-${c}`}
                     type="button"
                     className={cls}
-                    onMouseDown={(e) => handleCellMouseDown(e, r, c)}
-                    onKeyDown={(e) => {
+                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => handleCellMouseDown(e, r, c)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLButtonElement>) => {
                       if (e.key === "Enter" || e.key === " ") onReveal(r, c);
                       if (e.key.toLowerCase() === "f") onFlag(r, c);
                     }}
@@ -215,11 +276,52 @@ export default function Minesweeper({ defaultMines = 15, safeNeighbors = true }:
                 );
               })
             )}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Loading…</div>
+          )}
+        </div>
+        
+        {/* Bot Avatar pos*/}
+        {state && (
+          <div className="mb-2">
+            <BotAvatar 
+              isAiTurn={(state.turn ?? "human") === "ai"} 
+              gameStatus={state.status}
+            />
           </div>
-        ) : (
-          <div className="text-sm text-gray-500">Loading…</div>
         )}
       </div>
+
+      {state?.ai_enabled && state?.turn === "ai" && state?.status === "Playing" && (
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <span>Bot turn</span>
+          <button
+            onClick={async () => {
+              if (!gameId) return;
+              try {
+                setLoading(true);
+                const s = await aiEnd(gameId);
+                setState(s);
+                console.log(s)
+                // Play sounds for AI moves
+                if (s.status === "Game Over: Loss") {
+                  soundManager.play("explosion");
+                } else if (s.status === "Victory") {
+                  soundManager.play("victory");
+                }
+              } catch (e: any) {
+                setErrorMsg(e.message ?? "AI end failed");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+          >
+            Debug: End Bot turn
+          </button>
+        </div>
+      )}
     </div>
   );
 }

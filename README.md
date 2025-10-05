@@ -56,14 +56,15 @@ graph TD
 ```bash
 cd backend
 pip install -r requirements.txt
-python main.py   # or flask run (if structured as Flask app)
+python api.py
 ```
-- This launches the REST API at `http://localhost:5000`
-- Endpoints:
-  - `POST /new` — Start a new game
-  - `POST /uncover` — Reveal a cell
-  - `POST /flag` — Toggle flag on a cell
-  - `GET /state` — Get current board state
+- This launches the REST API at `http://localhost:8000`
+- Key Endpoints:
+  - `POST /games` — Create a new game with AI settings
+  - `GET /games/{gameId}` — Get current game state
+  - `POST /games/{gameId}/reveal` — Reveal a cell
+  - `POST /games/{gameId}/flag` — Toggle flag on a cell
+  - `POST /games/{gameId}/aiEnd` — Process AI turn
 
 ### 2. Frontend Setup (Next.js)
 ```bash
