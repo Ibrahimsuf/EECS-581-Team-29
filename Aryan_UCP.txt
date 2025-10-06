@@ -1,0 +1,69 @@
+Medium AI Mode
+
+User Story: As a player using AI mode, I want the AI to uncover cells by randomly revealing them until it locates a safe cell, one that has zero adjacent mines. After finding that safe cell, I want it to expand from there and use the numbers it has uncovered to strategically reveal nearby cells. I want the AI to behave like a person who mixes random probing with logical reasoning.
+
+Unadjusted Actor Weight (UAW):
+Single external actor (Player / Game) interacting with AI uncover flow → Simple = 1
+UAW = 1
+
+Unadjusted Use Case Weight (UUCW):
+Primary use case: AI auto-uncover with combined random probing + deterministic expansion — Average complexity (requires constraint logic + heuristics) → Average = 10
+UUCW = 10
+
+Technical Complexity Factor (TCF):
+- AI decision complexity (random+deterministic switching) = 5 (weight 1)
+- Constraint solving / using revealed numbers to deduce safe cells = 4 (weight 1)
+- Random-to-safe detection & BFS/DFS expansion mechanics = 3 (weight 0.5)
+- Edge-case handling (flags, already-revealed, border cells) = 4 (weight 1)
+
+Formula:
+TCF = 0.6 + 0.01 * (5*1 + 4*1 + 3*0.5 + 4*1)
+= 0.6 + 0.01 * (5 + 4 + 1.5 + 4)
+= 0.6 + 0.01 * 14.5 = 0.6 + 0.145 = 0.745
+
+Environmental Factors (EF):
+- Familiarity with probabilistic / hybrid AI algorithms = 4
+- Testing & automation infrastructure for solver validation = 3
+- Team coordination / merges with existing AI and UI code = 2
+- Requirement volatility (heuristics tuning requested during integration) = 3
+
+Formula:
+EF = 1.4 - 0.03 * ( (4*1.5) + (3*0.5) + (2*2) - (3*1) )
+= 1.4 - 0.03 * (6 + 1.5 + 4 - 3)
+= 1.4 - 0.03 * 8.5 = 1.4 - 0.255 = 1.145
+
+Use Case Points (UCP):
+UCP = (UAW + UUCW) * TCF * EF = (1 + 10) * 0.745 * 1.145
+= 11 * 0.745 * 1.145 ≈ 9.38 UCP
+
+Effort Estimate:
+Adopt 20 hours per UCP (accounting for solver validation, integration, and tuning)
+Estimated Effort = 9.38 * 20 ≈ 188 hours
+
+Original Personal Estimate: ~10 hours (initial developer estimate for a baseline implementation)
+Actual Time: 25 hours (15h logic + 8h integration + 2h testing)
+
+Scope Implemented:
+- Random probing loop that uncovers unrevealed cells until a guaranteed-safe cell (0 adjacent mines) is revealed.
+- Immediate BFS-style expansion when a zero-adjacent cell is found (auto-uncover adjacent cells).
+- Constraint/number-driven uncovering using revealed numbers and basic deduction heuristics to expand beyond pure BFS (identify cells provably safe/unsafe).
+- Edge-case handling for flagged cells, already-revealed cells, boundaries, and preventing double-uncover.
+- Integration hooks with the game loop and turn/state synchronization so AI runs as a distinct turn and does not conflict with user input.
+- Basic unit/regression tests to validate core logic and prevent regressions during integration.
+
+| Item | Estimated | Actual |
+|------|-----------:|-------:|
+| Core random-probe loop & safe-cell detection | 3h | 6h |
+| BFS / zero-cell expansion implementation | 5h | 6h |
+| Constraint-based adjacent uncovering (deduction heuristics) | 2h | 3h |
+| Integration with game engine (turn hooks, events) | 3h | 5h |
+| UI / turn sync & indicators (prevent clicks during AI) | 1h | 2h |
+| Unit & integration testing | 1h | 2h |
+| Performance tuning & refactors | 1h | 1h |
+| Total | ~16h | 25h |
+
+Notes & Observations:
+- The implementation spent the bulk of time designing and validating the deduction heuristics — getting reliably safe deductions without over-committing (false positives) required careful checks and extra unit tests.
+- Integration brought additional unexpected time due to state-sync issues (clicks during AI turn, event ordering), which is typical when adding automated behavior to interactive systems.
+- The estimated UCP-based effort (188 hours) is intentionally conservative — it assumes a fully production-hardened, extensively tested, and tunable AI mode. The delivered implementation is a practical, working feature built in 25 hours, suitable for MVP/experimental use; further polish, extended heuristics, and robust QA would consume more of the UCP estimate.
+
